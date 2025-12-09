@@ -32,6 +32,7 @@
             color: white;
             padding: 30px;
             text-align: center;
+            position: relative;
         }
 
         .header h1 {
@@ -42,6 +43,32 @@
         .header p {
             font-size: 14px;
             opacity: 0.9;
+        }
+
+        .sync-status {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sync-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4ade80;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
         .alert-section {
@@ -326,11 +353,22 @@
             background: #721c24;
             color: white;
         }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
+            <div class="sync-status">
+                <div class="sync-dot"></div>
+                <span id="syncStatus">Connecting...</span>
+            </div>
             <h1>📦 Stok Barang dan Reagensia Laboratorium Andrologi</h1>
             <p>RS Imanuel Way Halim Bandarlampung</p>
         </div>
@@ -408,7 +446,7 @@
             </div>
             <div class="table-section">
                 <h2 style="margin-bottom: 20px; color: #495057;">📋 Riwayat Barang Masuk</h2>
-                <div id="tableMasuk"></div>
+                <div id="tableMasuk"><div class="loading">Loading data...</div></div>
             </div>
         </div>
 
@@ -440,7 +478,7 @@
             </div>
             <div class="table-section">
                 <h2 style="margin-bottom: 20px; color: #495057;">📋 Riwayat Barang Keluar</h2>
-                <div id="tableKeluar"></div>
+                <div id="tableKeluar"><div class="loading">Loading data...</div></div>
             </div>
         </div>
 
@@ -465,26 +503,57 @@
                     </div>
                 </div>
                 <h2 style="margin-bottom: 20px; color: #495057;">📋 Stok Barang Saat Ini</h2>
-                <div id="tableStok"></div>
+                <div id="tableStok"><div class="loading">Loading data...</div></div>
             </div>
         </div>
     </div>
 
-    <script>
-        let barangMasuk = [];
-        let barangKeluar = [];
-        let editIndexMasuk = -1;
-        let editIndexKeluar = -1;
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, push, set, onValue, remove, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
-        // Load data saat halaman dimuat
-        document.addEventListener('DOMContentLoaded', function() {
-            loadData();
-            setupEventListeners();
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCVNGrRKTzE97m2MsAiSvvRYd-wUaNRsKQ",
+            authDomain: "inventory-6563a.firebaseapp.com",
+            databaseURL: "https://inventory-6563a-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "inventory-6563a",
+            storageBucket: "inventory-6563a.firebasestorage.app",
+            messagingSenderId: "531206288884",
+            appId: "1:531206288884:web:c4ae470c7d30778dccb5a1",
+            measurementId: "G-6NYR8R2YYQ"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        let barangMasuk = {};
+        let barangKeluar = {};
+        let editKeyMasuk = null;
+        let editKeyKeluar = null;
+
+        // Setup real-time listeners
+        const barangMasukRef = ref(database, 'barangMasuk');
+        const barangKeluarRef = ref(database, 'barangKeluar');
+
+        onValue(barangMasukRef, (snapshot) => {
+            barangMasuk = snapshot.val() || {};
+            document.getElementById('syncStatus').textContent = 'Synced';
             renderAll();
         });
 
+        onValue(barangKeluarRef, (snapshot) => {
+            barangKeluar = snapshot.val() || {};
+            renderAll();
+        });
+
+        // Setup event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+        });
+
         function setupEventListeners() {
-            // Tab switching
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.addEventListener('click', function() {
                     const tabName = this.getAttribute('data-tab');
@@ -492,11 +561,8 @@
                 });
             });
 
-            // Form Masuk
             document.getElementById('formMasuk').addEventListener('submit', handleSubmitMasuk);
             document.getElementById('btnResetMasuk').addEventListener('click', resetFormMasuk);
-
-            // Form Keluar
             document.getElementById('formKeluar').addEventListener('submit', handleSubmitKeluar);
             document.getElementById('btnResetKeluar').addEventListener('click', resetFormKeluar);
         }
@@ -512,7 +578,7 @@
             if (tabName === 'stok') renderAll();
         }
 
-        function handleSubmitMasuk(e) {
+        async function handleSubmitMasuk(e) {
             e.preventDefault();
             const data = {
                 namaBarang: document.getElementById('namaBarangMasuk').value.trim(),
@@ -525,26 +591,27 @@
                 tanggalInput: new Date().toISOString()
             };
 
-            if (editIndexMasuk >= 0) {
-                barangMasuk[editIndexMasuk] = data;
-                editIndexMasuk = -1;
-                alert('✅ Data berhasil diupdate!');
-            } else {
-                barangMasuk.push(data);
-                alert('✅ Data berhasil disimpan!');
+            try {
+                if (editKeyMasuk) {
+                    await set(ref(database, `barangMasuk/${editKeyMasuk}`), data);
+                    alert('✅ Data berhasil diupdate!');
+                    editKeyMasuk = null;
+                } else {
+                    await push(barangMasukRef, data);
+                    alert('✅ Data berhasil disimpan!');
+                }
+                resetFormMasuk();
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
             }
-
-            saveData();
-            resetFormMasuk();
-            renderAll();
         }
 
-        function handleSubmitKeluar(e) {
+        async function handleSubmitKeluar(e) {
             e.preventDefault();
             const namaBarang = document.getElementById('namaBarangKeluar').value;
             const jumlah = parseFloat(document.getElementById('jumlahKeluar').value);
             
-            if (editIndexKeluar < 0) {
+            if (!editKeyKeluar) {
                 const stok = calculateStock();
                 const itemStok = stok.find(s => s.namaBarang === namaBarang);
                 
@@ -561,47 +628,36 @@
                 tanggalInput: new Date().toISOString()
             };
 
-            if (editIndexKeluar >= 0) {
-                barangKeluar[editIndexKeluar] = data;
-                editIndexKeluar = -1;
-                alert('✅ Data berhasil diupdate!');
-            } else {
-                barangKeluar.push(data);
-                alert('✅ Data berhasil disimpan!');
+            try {
+                if (editKeyKeluar) {
+                    await set(ref(database, `barangKeluar/${editKeyKeluar}`), data);
+                    alert('✅ Data berhasil diupdate!');
+                    editKeyKeluar = null;
+                } else {
+                    await push(barangKeluarRef, data);
+                    alert('✅ Data berhasil disimpan!');
+                }
+                resetFormKeluar();
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
             }
-
-            saveData();
-            resetFormKeluar();
-            renderAll();
         }
 
         function resetFormMasuk() {
             document.getElementById('formMasuk').reset();
-            editIndexMasuk = -1;
+            editKeyMasuk = null;
             document.getElementById('btnSubmitMasuk').textContent = 'Simpan';
         }
 
         function resetFormKeluar() {
             document.getElementById('formKeluar').reset();
-            editIndexKeluar = -1;
+            editKeyKeluar = null;
             document.getElementById('btnSubmitKeluar').textContent = 'Simpan';
-        }
-
-        function loadData() {
-            const saved1 = localStorage.getItem('barangMasuk');
-            const saved2 = localStorage.getItem('barangKeluar');
-            if (saved1) barangMasuk = JSON.parse(saved1);
-            if (saved2) barangKeluar = JSON.parse(saved2);
-        }
-
-        function saveData() {
-            localStorage.setItem('barangMasuk', JSON.stringify(barangMasuk));
-            localStorage.setItem('barangKeluar', JSON.stringify(barangKeluar));
         }
 
         function calculateStock() {
             const stockMap = {};
-            barangMasuk.forEach(item => {
+            Object.values(barangMasuk).forEach(item => {
                 if (!stockMap[item.namaBarang]) {
                     stockMap[item.namaBarang] = {
                         namaBarang: item.namaBarang,
@@ -614,7 +670,7 @@
                 }
                 stockMap[item.namaBarang].stokAkhir += item.jumlah;
             });
-            barangKeluar.forEach(item => {
+            Object.values(barangKeluar).forEach(item => {
                 if (stockMap[item.namaBarang]) {
                     stockMap[item.namaBarang].stokAkhir -= item.jumlah;
                 }
@@ -695,7 +751,7 @@
             });
 
             document.getElementById('totalBarang').textContent = stock.length;
-            document.getElementById('totalTransaksi').textContent = barangMasuk.length + barangKeluar.length;
+            document.getElementById('totalTransaksi').textContent = Object.keys(barangMasuk).length + Object.keys(barangKeluar).length;
             document.getElementById('stokMenipis').textContent = menipis;
             document.getElementById('hampirKedaluwarsa').textContent = hampirExp;
         }
@@ -726,13 +782,14 @@
 
         function renderTableMasuk() {
             const container = document.getElementById('tableMasuk');
-            if (barangMasuk.length === 0) {
+            const items = Object.entries(barangMasuk);
+            if (items.length === 0) {
                 container.innerHTML = '<div class="empty-state"><p>Belum ada data</p></div>';
                 return;
             }
             let html = '<table><thead><tr><th>No</th><th>Tanggal</th><th>Nama</th><th>Jumlah</th><th>Satuan</th><th>Exp</th><th>Min</th><th>Supplier</th><th>Ket</th><th>Aksi</th></tr></thead><tbody>';
-            barangMasuk.forEach((item, idx) => {
-                html += `<tr><td>${idx+1}</td><td>${formatDateTime(item.tanggalInput)}</td><td><strong>${item.namaBarang}</strong></td><td>${item.jumlah}</td><td>${item.satuan}</td><td>${formatDate(item.tanggalKedaluwarsa)}</td><td>${item.stokMinimum||'-'}</td><td>${item.supplier}</td><td>${item.keterangan}</td><td><div class="action-buttons"><button class="btn-edit" onclick="editMasuk(${idx})">Edit</button><button class="btn-delete" onclick="deleteMasuk(${idx})">Hapus</button></div></td></tr>`;
+            items.forEach(([key, item], idx) => {
+                html += `<tr><td>${idx+1}</td><td>${formatDateTime(item.tanggalInput)}</td><td><strong>${item.namaBarang}</strong></td><td>${item.jumlah}</td><td>${item.satuan}</td><td>${formatDate(item.tanggalKedaluwarsa)}</td><td>${item.stokMinimum||'-'}</td><td>${item.supplier}</td><td>${item.keterangan}</td><td><div class="action-buttons"><button class="btn-edit" onclick="window.editMasuk('${key}')">Edit</button><button class="btn-delete" onclick="window.deleteMasuk('${key}')">Hapus</button></div></td></tr>`;
             });
             html += '</tbody></table>';
             container.innerHTML = html;
@@ -740,13 +797,14 @@
 
         function renderTableKeluar() {
             const container = document.getElementById('tableKeluar');
-            if (barangKeluar.length === 0) {
+            const items = Object.entries(barangKeluar);
+            if (items.length === 0) {
                 container.innerHTML = '<div class="empty-state"><p>Belum ada data</p></div>';
                 return;
             }
             let html = '<table><thead><tr><th>No</th><th>Tanggal</th><th>Nama</th><th>Jumlah</th><th>Ket</th><th>Aksi</th></tr></thead><tbody>';
-            barangKeluar.forEach((item, idx) => {
-                html += `<tr><td>${idx+1}</td><td>${formatDateTime(item.tanggalInput)}</td><td><strong>${item.namaBarang}</strong></td><td>${item.jumlah}</td><td>${item.keterangan}</td><td><div class="action-buttons"><button class="btn-edit" onclick="editKeluar(${idx})">Edit</button><button class="btn-delete" onclick="deleteKeluar(${idx})">Hapus</button></div></td></tr>`;
+            items.forEach(([key, item], idx) => {
+                html += `<tr><td>${idx+1}</td><td>${formatDateTime(item.tanggalInput)}</td><td><strong>${item.namaBarang}</strong></td><td>${item.jumlah}</td><td>${item.keterangan}</td><td><div class="action-buttons"><button class="btn-edit" onclick="window.editKeluar('${key}')">Edit</button><button class="btn-delete" onclick="window.deleteKeluar('${key}')">Hapus</button></div></td></tr>`;
             });
             html += '</tbody></table>';
             container.innerHTML = html;
@@ -762,14 +820,14 @@
             let html = '<table><thead><tr><th>No</th><th>Nama</th><th>Stok</th><th>Satuan</th><th>Status</th><th>Exp</th><th>Min</th><th>Supplier</th><th>Aksi</th></tr></thead><tbody>';
             stock.forEach((item, idx) => {
                 const st = getStockStatus(item.stokAkhir, item.stokMinimum, item.tanggalKedaluwarsa);
-                html += `<tr><td>${idx+1}</td><td><strong>${item.namaBarang}</strong></td><td>${item.stokAkhir}</td><td>${item.satuan}</td><td><span class="status-badge ${st.class}">${st.status}</span></td><td>${formatDate(item.tanggalKedaluwarsa)}</td><td>${item.stokMinimum||'-'}</td><td>${item.supplier}</td><td><div class="action-buttons"><button class="btn-edit" onclick="editFromStok('${item.namaBarang}')">Edit</button><button class="btn-delete" onclick="deleteFromStok('${item.namaBarang}')">Hapus</button></div></td></tr>`;
+                html += `<tr><td>${idx+1}</td><td><strong>${item.namaBarang}</strong></td><td>${item.stokAkhir}</td><td>${item.satuan}</td><td><span class="status-badge ${st.class}">${st.status}</span></td><td>${formatDate(item.tanggalKedaluwarsa)}</td><td>${item.stokMinimum||'-'}</td><td>${item.supplier}</td><td><div class="action-buttons"><button class="btn-edit" onclick="window.editFromStok('${item.namaBarang}')">Edit</button><button class="btn-delete" onclick="window.deleteFromStok('${item.namaBarang}')">Hapus</button></div></td></tr>`;
             });
             html += '</tbody></table>';
             container.innerHTML = html;
         }
 
-        function editMasuk(idx) {
-            const item = barangMasuk[idx];
+        window.editMasuk = function(key) {
+            const item = barangMasuk[key];
             document.getElementById('namaBarangMasuk').value = item.namaBarang;
             document.getElementById('jumlahMasuk').value = item.jumlah;
             document.getElementById('satuanMasuk').value = item.satuan;
@@ -777,61 +835,74 @@
             document.getElementById('stokMinimumMasuk').value = item.stokMinimum || '';
             document.getElementById('supplierMasuk').value = item.supplier === '-' ? '' : item.supplier;
             document.getElementById('keteranganMasuk').value = item.keterangan === '-' ? '' : item.keterangan;
-            editIndexMasuk = idx;
+            editKeyMasuk = key;
             document.getElementById('btnSubmitMasuk').textContent = 'Update';
             switchTab('masuk');
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        };
 
-        function editKeluar(idx) {
-            const item = barangKeluar[idx];
+        window.editKeluar = function(key) {
+            const item = barangKeluar[key];
             document.getElementById('namaBarangKeluar').value = item.namaBarang;
             document.getElementById('jumlahKeluar').value = item.jumlah;
             document.getElementById('keteranganKeluar').value = item.keterangan === '-' ? '' : item.keterangan;
-            editIndexKeluar = idx;
+            editKeyKeluar = key;
             document.getElementById('btnSubmitKeluar').textContent = 'Update';
             switchTab('keluar');
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        };
 
-        function deleteMasuk(idx) {
+        window.deleteMasuk = async function(key) {
             if (confirm('⚠️ Yakin hapus data ini?')) {
-                barangMasuk.splice(idx, 1);
-                saveData();
-                renderAll();
-                alert('✅ Data dihapus!');
+                try {
+                    await remove(ref(database, `barangMasuk/${key}`));
+                    alert('✅ Data dihapus!');
+                } catch (error) {
+                    alert('❌ Error: ' + error.message);
+                }
             }
-        }
+        };
 
-        function deleteKeluar(idx) {
+        window.deleteKeluar = async function(key) {
             if (confirm('⚠️ Yakin hapus data ini?')) {
-                barangKeluar.splice(idx, 1);
-                saveData();
-                renderAll();
-                alert('✅ Data dihapus!');
+                try {
+                    await remove(ref(database, `barangKeluar/${key}`));
+                    alert('✅ Data dihapus!');
+                } catch (error) {
+                    alert('❌ Error: ' + error.message);
+                }
             }
-        }
+        };
 
-        function editFromStok(nama) {
-            const idx = barangMasuk.findIndex(b => b.namaBarang === nama);
-            if (idx >= 0) {
-                editMasuk(idx);
+        window.editFromStok = function(nama) {
+            const entry = Object.entries(barangMasuk).find(([k, v]) => v.namaBarang === nama);
+            if (entry) {
+                window.editMasuk(entry[0]);
             } else {
                 alert('❌ Data tidak ditemukan');
             }
-        }
+        };
 
-        function deleteFromStok(nama) {
-            const cMasuk = barangMasuk.filter(i => i.namaBarang === nama).length;
-            const cKeluar = barangKeluar.filter(i => i.namaBarang === nama).length;
+        window.deleteFromStok = async function(nama) {
+            const cMasuk = Object.values(barangMasuk).filter(i => i.namaBarang === nama).length;
+            const cKeluar = Object.values(barangKeluar).filter(i => i.namaBarang === nama).length;
             if (confirm(`⚠️ PERINGATAN!\n\nHapus SEMUA data "${nama}"?\n\nBarang Masuk: ${cMasuk}\nBarang Keluar: ${cKeluar}\n\nTidak bisa dibatalkan!`)) {
-                barangMasuk = barangMasuk.filter(i => i.namaBarang !== nama);
-                barangKeluar = barangKeluar.filter(i => i.namaBarang !== nama);
-                saveData();
-                renderAll();
-                alert('✅ Semua data dihapus!');
+                try {
+                    const masukToDelete = Object.entries(barangMasuk).filter(([k, v]) => v.namaBarang === nama);
+                    const keluarToDelete = Object.entries(barangKeluar).filter(([k, v]) => v.namaBarang === nama);
+                    
+                    for (const [key] of masukToDelete) {
+                        await remove(ref(database, `barangMasuk/${key}`));
+                    }
+                    for (const [key] of keluarToDelete) {
+                        await remove(ref(database, `barangKeluar/${key}`));
+                    }
+                    alert('✅ Semua data dihapus!');
+                } catch (error) {
+                    alert('❌ Error: ' + error.message);
+                }
             }
-        }
+        };
 
         function renderAll() {
             renderTableMasuk();
