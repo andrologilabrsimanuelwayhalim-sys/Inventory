@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stok Barang Lab Andrologi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .alert-section {
+            padding: 20px 30px;
+            background: #fff3cd;
+            border-bottom: 2px solid #ffc107;
+        }
+
+        .alert-hidden {
+            display: none;
+        }
+
+        .alert-box {
+            background: white;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .alert-box.warning {
+            border-left-color: #ffc107;
+        }
+
+        .alert-box h3 {
+            color: #dc3545;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .alert-box.warning h3 {
+            color: #ff8c00;
+        }
+
+        .alert-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        .alert-item:last-child {
+            border-bottom: none;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+        }
+
+        .tab.active {
+            background: white;
+            border-bottom: 3px solid #667eea;
+            color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #495057;
+            font-size: 14px;
+        }
+
+        input, select {
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-edit {
+            background: #ffc107;
+            color: #000;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-edit:hover {
+            background: #e0a800;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
+        .table-section {
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            flex: 1;
+            min-width: 200px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-card.warning {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+        }
+
+        .stat-card.danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+
+        .stat-card h3 {
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 13px;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-normal {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-expired {
+            background: #721c24;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 Stok Barang dan Reagensia Laboratorium Andrologi</h1>
+            <p>RS Imanuel Way Halim Bandarlampung</p>
+        </div>
+
+        <div id="alertSection" class="alert-section alert-hidden">
+            <div id="stockAlert" class="alert-box warning" style="display: none;">
+                <h3>⚠️ Peringatan Stok Menipis</h3>
+                <div id="stockAlertContent"></div>
+            </div>
+            <div id="expiryAlert" class="alert-box" style="display: none;">
+                <h3>🚨 Peringatan Kedaluwarsa</h3>
+                <div id="expiryAlertContent"></div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="masuk">📥 Barang Masuk</div>
+            <div class="tab" data-tab="keluar">📤 Barang Keluar</div>
+            <div class="tab" data-tab="stok">📊 Stok & Laporan</div>
+        </div>
+
+        <div id="tabMasuk" class="tab-content active">
+            <div class="form-section">
+                <h2 style="margin-bottom: 20px; color: #495057;">📥 Input Barang Masuk</h2>
+                <form id="formMasuk">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nama Barang/Reagensia *</label>
+                            <input type="text" id="namaBarangMasuk" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Jumlah *</label>
+                            <input type="number" id="jumlahMasuk" min="0.001" step="0.001" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Satuan *</label>
+                            <select id="satuanMasuk" required>
+                                <option value="">-- Pilih Satuan --</option>
+                                <option value="Box">Box</option>
+                                <option value="Botol">Botol</option>
+                                <option value="Vial">Vial</option>
+                                <option value="Tube">Tube</option>
+                                <option value="Kit">Kit</option>
+                                <option value="Pack">Pack</option>
+                                <option value="Unit">Unit</option>
+                                <option value="Pcs">Pcs</option>
+                                <option value="mL">mL</option>
+                                <option value="L">L</option>
+                                <option value="gram">gram</option>
+                                <option value="mg">mg</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tanggal Kedaluwarsa</label>
+                            <input type="date" id="tanggalKedaluwarsaMasuk">
+                        </div>
+                        <div class="form-group">
+                            <label>Stok Minimum</label>
+                            <input type="number" id="stokMinimumMasuk" min="0" step="0.001">
+                        </div>
+                        <div class="form-group">
+                            <label>Supplier</label>
+                            <input type="text" id="supplierMasuk">
+                        </div>
+                        <div class="form-group">
+                            <label>Keterangan</label>
+                            <input type="text" id="keteranganMasuk">
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" class="btn-secondary" id="btnResetMasuk">Reset</button>
+                        <button type="submit" class="btn-primary" id="btnSubmitMasuk">Simpan</button>
+                    </div>
+                </form>
+            </div>
+            <div class="table-section">
+                <h2 style="margin-bottom: 20px; color: #495057;">📋 Riwayat Barang Masuk</h2>
+                <div id="tableMasuk"></div>
+            </div>
+        </div>
+
+        <div id="tabKeluar" class="tab-content">
+            <div class="form-section">
+                <h2 style="margin-bottom: 20px; color: #495057;">📤 Input Barang Keluar</h2>
+                <form id="formKeluar">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nama Barang *</label>
+                            <select id="namaBarangKeluar" required>
+                                <option value="">-- Pilih Barang --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Jumlah *</label>
+                            <input type="number" id="jumlahKeluar" min="0.001" step="0.001" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Keterangan</label>
+                            <input type="text" id="keteranganKeluar">
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" class="btn-secondary" id="btnResetKeluar">Reset</button>
+                        <button type="submit" class="btn-primary" id="btnSubmitKeluar">Simpan</button>
+                    </div>
+                </form>
+            </div>
+            <div class="table-section">
+                <h2 style="margin-bottom: 20px; color: #495057;">📋 Riwayat Barang Keluar</h2>
+                <div id="tableKeluar"></div>
+            </div>
+        </div>
+
+        <div id="tabStok" class="tab-content">
+            <div class="table-section">
+                <div class="stats">
+                    <div class="stat-card">
+                        <h3 id="totalBarang">0</h3>
+                        <p>Total Jenis Barang</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="totalTransaksi">0</h3>
+                        <p>Total Transaksi</p>
+                    </div>
+                    <div class="stat-card warning">
+                        <h3 id="stokMenipis">0</h3>
+                        <p>Stok Menipis</p>
+                    </div>
+                    <div class="stat-card danger">
+                        <h3 id="hampirKedaluwarsa">0</h3>
+                        <p>Hampir Kedaluwarsa</p>
+                    </div>
+                </div>
+                <h2 style="margin-bottom: 20px; color: #495057;">📋 Stok Barang Saat Ini</h2>
+                <div id="tableStok"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let barangMasuk = [];
+        let barangKeluar = [];
+        let editIndexMasuk = -1;
+        let editIndexKeluar = -1;
+
+        // Load data saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            setupEventListeners();
+            renderAll();
+        });
+
+        function setupEventListeners() {
+            // Tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    switchTab(tabName);
+                });
+            });
+
+            // Form Masuk
+            document.getElementById('formMasuk').addEventListener('submit', handleSubmitMasuk);
+            document.getElementById('btnResetMasuk').addEventListener('click', resetFormMasuk);
+
+            // Form Keluar
+            document.getElementById('formKeluar').addEventListener('submit', handleSubmitKeluar);
+            document.getElementById('btnResetKeluar').addEventListener('click', resetFormKeluar);
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(`tab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`).classList.add('active');
+            
+            if (tabName === 'keluar') updateBarangKeluarDropdown();
+            if (tabName === 'stok') renderAll();
+        }
+
+        function handleSubmitMasuk(e) {
+            e.preventDefault();
+            const data = {
+                namaBarang: document.getElementById('namaBarangMasuk').value.trim(),
+                jumlah: parseFloat(document.getElementById('jumlahMasuk').value),
+                satuan: document.getElementById('satuanMasuk').value,
+                tanggalKedaluwarsa: document.getElementById('tanggalKedaluwarsaMasuk').value || null,
+                stokMinimum: parseFloat(document.getElementById('stokMinimumMasuk').value) || 0,
+                supplier: document.getElementById('supplierMasuk').value.trim() || '-',
+                keterangan: document.getElementById('keteranganMasuk').value.trim() || '-',
+                tanggalInput: new Date().toISOString()
+            };
+
+            if (editIndexMasuk >= 0) {
+                barangMasuk[editIndexMasuk] = data;
+                editIndexMasuk = -1;
+                alert('✅ Data berhasil diupdate!');
+            } else {
+                barangMasuk.push(data);
+                alert('✅ Data berhasil disimpan!');
+            }
+
+            saveData();
+            resetFormMasuk();
+            renderAll();
+        }
+
+        function handleSubmitKeluar(e) {
+            e.preventDefault();
+            const namaBarang = document.getElementById('namaBarangKeluar').value;
+            const jumlah = parseFloat(document.getElementById('jumlahKeluar').value);
+            
+            if (editIndexKeluar < 0) {
+                const stok = calculateStock();
+                const itemStok = stok.find(s => s.namaBarang === namaBarang);
+                
+                if (!itemStok || itemStok.stokAkhir < jumlah) {
+                    alert('❌ Stok tidak mencukupi!');
+                    return;
+                }
+            }
+
+            const data = {
+                namaBarang: namaBarang,
+                jumlah: jumlah,
+                keterangan: document.getElementById('keteranganKeluar').value.trim() || '-',
+                tanggalInput: new Date().toISOString()
+            };
+
+            if (editIndexKeluar >= 0) {
+                barangKeluar[editIndexKeluar] = data;
+                editIndexKeluar = -1;
+                alert('✅ Data berhasil diupdate!');
+            } else {
+                barangKeluar.push(data);
+                alert('✅ Data berhasil disimpan!');
+            }
+
+            saveData();
+            resetFormKeluar();
+            renderAll();
+        }
+
+        function resetFormMasuk() {
+            document.getElementById('formMasuk').reset();
+            editIndexMasuk = -1;
+            document.getElementById('btnSubmitMasuk').textContent = 'Simpan';
+        }
+
+        function resetFormKeluar() {
+            document.getElementById('formKeluar').reset();
+            editIndexKeluar = -1;
+            document.getElementById('btnSubmitKeluar').textContent = 'Simpan';
+        }
+
+        function loadData() {
+            const saved1 = localStorage.getItem('barangMasuk');
+            const saved2 = localStorage.getItem('barangKeluar');
+            if (saved1) barangMasuk = JSON.parse(saved1);
+            if (saved2) barangKeluar = JSON.parse(saved2);
+        }
+
+        function saveData() {
+            localStorage.setItem('barangMasuk', JSON.stringify(barangMasuk));
+            localStorage.setItem('barangKeluar', JSON.stringify(barangKeluar));
+        }
+
+        function calculateStock() {
+            const stockMap = {};
+            barangMasuk.forEach(item => {
+                if (!stockMap[item.namaBarang]) {
+                    stockMap[item.namaBarang] = {
+                        namaBarang: item.namaBarang,
+                        stokAkhir: 0,
+                        satuan: item.satuan,
+                        tanggalKedaluwarsa: item.tanggalKedaluwarsa,
+                        stokMinimum: item.stokMinimum,
+                        supplier: item.supplier
+                    };
+                }
+                stockMap[item.namaBarang].stokAkhir += item.jumlah;
+            });
+            barangKeluar.forEach(item => {
+                if (stockMap[item.namaBarang]) {
+                    stockMap[item.namaBarang].stokAkhir -= item.jumlah;
+                }
+            });
+            return Object.values(stockMap);
+        }
+
+        function getStockStatus(stok, stokMin, tglExp) {
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            if (tglExp) {
+                const exp = new Date(tglExp);
+                exp.setHours(0,0,0,0);
+                if (exp < today) return { status: 'Kedaluwarsa', class: 'status-expired' };
+                const days = Math.ceil((exp - today) / 86400000);
+                if (days <= 30) return { status: `Exp ${days} hari`, class: 'status-danger' };
+            }
+            if (stok <= 0) return { status: 'Habis', class: 'status-danger' };
+            if (stokMin > 0 && stok <= stokMin) return { status: 'Stok Menipis', class: 'status-warning' };
+            return { status: 'Normal', class: 'status-normal' };
+        }
+
+        function checkAlerts() {
+            const stock = calculateStock();
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            let lowStock = [];
+            let expiring = [];
+            
+            stock.forEach(item => {
+                if (item.stokMinimum > 0 && item.stokAkhir <= item.stokMinimum && item.stokAkhir > 0) {
+                    lowStock.push(`${item.namaBarang}: ${item.stokAkhir} ${item.satuan}`);
+                }
+                if (item.tanggalKedaluwarsa) {
+                    const exp = new Date(item.tanggalKedaluwarsa);
+                    exp.setHours(0,0,0,0);
+                    const days = Math.ceil((exp - today) / 86400000);
+                    if (days <= 30) {
+                        expiring.push(`${item.namaBarang}: ${days >= 0 ? days + ' hari' : 'KEDALUWARSA'}`);
+                    }
+                }
+            });
+
+            const alertSection = document.getElementById('alertSection');
+            const stockAlert = document.getElementById('stockAlert');
+            const expiryAlert = document.getElementById('expiryAlert');
+
+            if (lowStock.length > 0) {
+                document.getElementById('stockAlertContent').innerHTML = lowStock.map(i => `<div class="alert-item">⚠️ ${i}</div>`).join('');
+                stockAlert.style.display = 'block';
+            } else {
+                stockAlert.style.display = 'none';
+            }
+
+            if (expiring.length > 0) {
+                document.getElementById('expiryAlertContent').innerHTML = expiring.map(i => `<div class="alert-item">🚨 ${i}</div>`).join('');
+                expiryAlert.style.display = 'block';
+            } else {
+                expiryAlert.style.display = 'none';
+            }
+
+            alertSection.className = (lowStock.length > 0 || expiring.length > 0) ? 'alert-section' : 'alert-section alert-hidden';
+        }
+
+        function updateStats() {
+            const stock = calculateStock();
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            let menipis = 0, hampirExp = 0;
+            
+            stock.forEach(item => {
+                if (item.stokMinimum > 0 && item.stokAkhir <= item.stokMinimum && item.stokAkhir > 0) menipis++;
+                if (item.tanggalKedaluwarsa) {
+                    const exp = new Date(item.tanggalKedaluwarsa);
+                    exp.setHours(0,0,0,0);
+                    if (Math.ceil((exp - today) / 86400000) <= 30) hampirExp++;
+                }
+            });
+
+            document.getElementById('totalBarang').textContent = stock.length;
+            document.getElementById('totalTransaksi').textContent = barangMasuk.length + barangKeluar.length;
+            document.getElementById('stokMenipis').textContent = menipis;
+            document.getElementById('hampirKedaluwarsa').textContent = hampirExp;
+        }
+
+        function updateBarangKeluarDropdown() {
+            const select = document.getElementById('namaBarangKeluar');
+            const stock = calculateStock();
+            select.innerHTML = '<option value="">-- Pilih Barang --</option>';
+            stock.filter(i => i.stokAkhir > 0).forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.namaBarang;
+                opt.textContent = `${item.namaBarang} (${item.stokAkhir} ${item.satuan})`;
+                select.appendChild(opt);
+            });
+        }
+
+        function formatDate(d) {
+            if (!d) return '-';
+            const dt = new Date(d);
+            return `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`;
+        }
+
+        function formatDateTime(d) {
+            if (!d) return '-';
+            const dt = new Date(d);
+            return `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+        }
+
+        function renderTableMasuk() {
+            const container = document.getElementById('tableMasuk');
+            if (barangMasuk.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>Belum ada data</p></div>';
+                return;
+            }
+            let html = '<table><thead><tr><th>No</th><th>Tanggal</th><th>Nama</th><th>Jumlah</th><th>Satuan</th><th>Exp</th><th>Min</th><th>Supplier</th><th>Ket</th><th>Aksi</th></tr></thead><tbody>';
+            barangMasuk.forEach((item, idx) => {
+                html += `<tr><td>${idx+1}</td><td>${formatDateTime(item.tanggalInput)}</td><td><strong>${item.namaBarang}</strong></td><td>${item.jumlah}</td><td>${item.satuan}</td><td>${formatDate(item.tanggalKedaluwarsa)}</td><td>${item.stokMinimum||'-'}</td><td>${item.supplier}</td><td>${item.keterangan}</td><td><div class="action-buttons"><button class="btn-edit" onclick="editMasuk(${idx})">Edit</button><button class="btn-delete" onclick="deleteMasuk(${idx})">Hapus</button></div></td></tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderTableKeluar() {
+            const container = document.getElementById('tableKeluar');
+            if (barangKeluar.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>Belum ada data</p></div>';
+                return;
+            }
+            let html = '<table><thead><tr><th>No</th><th>Tanggal</th><th>Nama</th><th>Jumlah</th><th>Ket</th><th>Aksi</th></tr></thead><tbody>';
+            barangKeluar.forEach((item, idx) => {
+                html += `<tr><td>${idx+1}</td><td>${formatDateTime(item.tanggalInput)}</td><td><strong>${item.namaBarang}</strong></td><td>${item.jumlah}</td><td>${item.keterangan}</td><td><div class="action-buttons"><button class="btn-edit" onclick="editKeluar(${idx})">Edit</button><button class="btn-delete" onclick="deleteKeluar(${idx})">Hapus</button></div></td></tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderTableStok() {
+            const container = document.getElementById('tableStok');
+            const stock = calculateStock();
+            if (stock.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>Belum ada data</p></div>';
+                return;
+            }
+            let html = '<table><thead><tr><th>No</th><th>Nama</th><th>Stok</th><th>Satuan</th><th>Status</th><th>Exp</th><th>Min</th><th>Supplier</th><th>Aksi</th></tr></thead><tbody>';
+            stock.forEach((item, idx) => {
+                const st = getStockStatus(item.stokAkhir, item.stokMinimum, item.tanggalKedaluwarsa);
+                html += `<tr><td>${idx+1}</td><td><strong>${item.namaBarang}</strong></td><td>${item.stokAkhir}</td><td>${item.satuan}</td><td><span class="status-badge ${st.class}">${st.status}</span></td><td>${formatDate(item.tanggalKedaluwarsa)}</td><td>${item.stokMinimum||'-'}</td><td>${item.supplier}</td><td><div class="action-buttons"><button class="btn-edit" onclick="editFromStok('${item.namaBarang}')">Edit</button><button class="btn-delete" onclick="deleteFromStok('${item.namaBarang}')">Hapus</button></div></td></tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function editMasuk(idx) {
+            const item = barangMasuk[idx];
+            document.getElementById('namaBarangMasuk').value = item.namaBarang;
+            document.getElementById('jumlahMasuk').value = item.jumlah;
+            document.getElementById('satuanMasuk').value = item.satuan;
+            document.getElementById('tanggalKedaluwarsaMasuk').value = item.tanggalKedaluwarsa || '';
+            document.getElementById('stokMinimumMasuk').value = item.stokMinimum || '';
+            document.getElementById('supplierMasuk').value = item.supplier === '-' ? '' : item.supplier;
+            document.getElementById('keteranganMasuk').value = item.keterangan === '-' ? '' : item.keterangan;
+            editIndexMasuk = idx;
+            document.getElementById('btnSubmitMasuk').textContent = 'Update';
+            switchTab('masuk');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function editKeluar(idx) {
+            const item = barangKeluar[idx];
+            document.getElementById('namaBarangKeluar').value = item.namaBarang;
+            document.getElementById('jumlahKeluar').value = item.jumlah;
+            document.getElementById('keteranganKeluar').value = item.keterangan === '-' ? '' : item.keterangan;
+            editIndexKeluar = idx;
+            document.getElementById('btnSubmitKeluar').textContent = 'Update';
+            switchTab('keluar');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function deleteMasuk(idx) {
+            if (confirm('⚠️ Yakin hapus data ini?')) {
+                barangMasuk.splice(idx, 1);
+                saveData();
+                renderAll();
+                alert('✅ Data dihapus!');
+            }
+        }
+
+        function deleteKeluar(idx) {
+            if (confirm('⚠️ Yakin hapus data ini?')) {
+                barangKeluar.splice(idx, 1);
+                saveData();
+                renderAll();
+                alert('✅ Data dihapus!');
+            }
+        }
+
+        function editFromStok(nama) {
+            const idx = barangMasuk.findIndex(b => b.namaBarang === nama);
+            if (idx >= 0) {
+                editMasuk(idx);
+            } else {
+                alert('❌ Data tidak ditemukan');
+            }
+        }
+
+        function deleteFromStok(nama) {
+            const cMasuk = barangMasuk.filter(i => i.namaBarang === nama).length;
+            const cKeluar = barangKeluar.filter(i => i.namaBarang === nama).length;
+            if (confirm(`⚠️ PERINGATAN!\n\nHapus SEMUA data "${nama}"?\n\nBarang Masuk: ${cMasuk}\nBarang Keluar: ${cKeluar}\n\nTidak bisa dibatalkan!`)) {
+                barangMasuk = barangMasuk.filter(i => i.namaBarang !== nama);
+                barangKeluar = barangKeluar.filter(i => i.namaBarang !== nama);
+                saveData();
+                renderAll();
+                alert('✅ Semua data dihapus!');
+            }
+        }
+
+        function renderAll() {
+            renderTableMasuk();
+            renderTableKeluar();
+            renderTableStok();
+            updateStats();
+            checkAlerts();
+            updateBarangKeluarDropdown();
+        }
+    </script>
+</body>
+</html>
