@@ -759,6 +759,9 @@
         function updateBarangKeluarDropdown() {
             const select = document.getElementById('namaBarangKeluar');
             const stock = calculateStock();
+            // Sort by nama barang alphabetically
+            stock.sort((a, b) => a.namaBarang.localeCompare(b.namaBarang, 'id'));
+            
             select.innerHTML = '<option value="">-- Pilih Barang --</option>';
             stock.filter(i => i.stokAkhir > 0).forEach(item => {
                 const opt = document.createElement('option');
@@ -787,6 +790,9 @@
                 container.innerHTML = '<div class="empty-state"><p>Belum ada data</p></div>';
                 return;
             }
+            // Sort by nama barang alphabetically
+            items.sort((a, b) => a[1].namaBarang.localeCompare(b[1].namaBarang, 'id'));
+            
             let html = '<table><thead><tr><th>No</th><th>Tanggal</th><th>Nama</th><th>Jumlah</th><th>Satuan</th><th>Exp</th><th>Min</th><th>Supplier</th><th>Ket</th><th>Aksi</th></tr></thead><tbody>';
             items.forEach(([key, item], idx) => {
                 html += `<tr><td>${idx+1}</td><td>${formatDateTime(item.tanggalInput)}</td><td><strong>${item.namaBarang}</strong></td><td>${item.jumlah}</td><td>${item.satuan}</td><td>${formatDate(item.tanggalKedaluwarsa)}</td><td>${item.stokMinimum||'-'}</td><td>${item.supplier}</td><td>${item.keterangan}</td><td><div class="action-buttons"><button class="btn-edit" onclick="window.editMasuk('${key}')">Edit</button><button class="btn-delete" onclick="window.deleteMasuk('${key}')">Hapus</button></div></td></tr>`;
@@ -802,6 +808,9 @@
                 container.innerHTML = '<div class="empty-state"><p>Belum ada data</p></div>';
                 return;
             }
+            // Sort by nama barang alphabetically
+            items.sort((a, b) => a[1].namaBarang.localeCompare(b[1].namaBarang, 'id'));
+            
             let html = '<table><thead><tr><th>No</th><th>Tanggal</th><th>Nama</th><th>Jumlah</th><th>Ket</th><th>Aksi</th></tr></thead><tbody>';
             items.forEach(([key, item], idx) => {
                 html += `<tr><td>${idx+1}</td><td>${formatDateTime(item.tanggalInput)}</td><td><strong>${item.namaBarang}</strong></td><td>${item.jumlah}</td><td>${item.keterangan}</td><td><div class="action-buttons"><button class="btn-edit" onclick="window.editKeluar('${key}')">Edit</button><button class="btn-delete" onclick="window.deleteKeluar('${key}')">Hapus</button></div></td></tr>`;
@@ -817,6 +826,9 @@
                 container.innerHTML = '<div class="empty-state"><p>Belum ada data</p></div>';
                 return;
             }
+            // Sort by nama barang alphabetically
+            stock.sort((a, b) => a.namaBarang.localeCompare(b.namaBarang, 'id'));
+            
             let html = '<table><thead><tr><th>No</th><th>Nama</th><th>Stok</th><th>Satuan</th><th>Status</th><th>Exp</th><th>Min</th><th>Supplier</th><th>Aksi</th></tr></thead><tbody>';
             stock.forEach((item, idx) => {
                 const st = getStockStatus(item.stokAkhir, item.stokMinimum, item.tanggalKedaluwarsa);
